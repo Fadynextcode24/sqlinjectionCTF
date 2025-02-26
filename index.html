@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SQL CTF - Troll Edition</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+        input { margin: 5px; padding: 8px; }
+        #message { font-weight: bold; margin-top: 10px; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h2>Login</h2>
+    <p>Welcome! Can you find the secret flag?</p>
+    <form onsubmit="checkLogin(); return false;">
+        <label>Username:</label> <input type="text" id="username" required><br><br>
+        <label>Password:</label> <input type="password" id="password" required><br><br>
+        <input type="submit" value="Login">
+    </form>
+    <p id="message"></p>
+
+    <script>
+        // Open Web SQL Database
+        var db = openDatabase('troll_db', '1.0', 'Troll CTF Challenge', 2 * 1024 * 1024);
+
+        // Fake Distraction Data
+        db.transaction(function (tx) {
+            tx.executeSql('CREATE TABLE IF NOT EXISTS gibberish (id INTEGER PRIMARY KEY, nonsense TEXT)');
+            tx.executeSql('DELETE FROM gibberish');
+            tx.executeSql('INSERT INTO gibberish (nonsense) VALUES ("It’s over 9000!")');
+            tx.executeSql('INSERT INTO gibberish (nonsense) VALUES ("You shall not pass!")');
+            tx.executeSql('INSERT INTO gibberish (nonsense) VALUES ("The cake is a lie!")');
+            tx.executeSql('INSERT INTO gibberish (nonsense) VALUES ("Why are you even looking here?")');
+
+            // LeBron Easter Egg
+            tx.executeSql('CREATE TABLE IF NOT EXISTS basketball (id INTEGER PRIMARY KEY, player TEXT, title TEXT)');
+            tx.executeSql('DELETE FROM basketball');
+            tx.executeSql('INSERT INTO basketball (player, title) VALUES ("LeBron James", "The Glorious King")');
+
+            // Actual User Table
+            tx.executeSql('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT, password TEXT)');
+            tx.executeSql('DELETE FROM users');
+            tx.executeSql('INSERT INTO users (username, password) VALUES ("admin", "supersecure")');
+
+            // Secret Flag Table
+            tx.executeSql('CREATE TABLE IF NOT EXISTS secrets (id INTEGER PRIMARY KEY, hint TEXT, flag TEXT)');
+            tx.executeSql('DELETE FROM secrets');
+            tx.executeSql('INSERT INTO secrets (hint, flag) VALUES ("Shhh... only the curious will find me!", "FLAG{TROLL_SQL_CTF}")');
+        });
+
+        // Fake Troll Functions
+        function fakeSecurityCheck() {
+            console.log("WARNING: You are being tracked! 🕵️‍♂️");
+            console.log("Just kidding. Or am I? 🤔");
+        }
+        fakeSecurityCheck();
+
+        function checkLogin() {
+            var user = document.getElementById('username').value;
+            var pass = document.getElementById('password').value;
+
+            db.transaction(function (tx) {
+                tx.executeSql('SELECT * FROM users WHERE username=? AND password=?', [user, pass], function (tx, results) {
+                    var messageElement = document.getElementById("message");
+
+                    if (results.rows.length > 0) {
+                        messageElement.innerHTML = "<span class='success'>Login successful! But no flag here.</span>";
+                    } else {
+                        messageElement.innerHTML = "<span class='error'>Invalid login. Try again!</span>";
+                    }
+                }, function (tx, error) {
+                    console.error("Error occurred: " + error.message);
+                    document.getElementById("message").innerHTML = "<span class='error'>Database error!</span>";
+                });
+            });
+        }
+
+        // Fake Console Hints to Troll Players
+        console.log("%cHint: Open the console and try running some SQL commands.", "color: orange;");
+        console.log("db.transaction(function (tx) { tx.executeSql('SELECT * FROM gibberish', [], function (tx, results) { console.log(results.rows.item(0)); }); });");
+        console.log("db.transaction(function (tx) { tx.executeSql('SELECT * FROM basketball', [], function (tx, results) { console.log(results.rows.item(0)); }); });");
+    </script>
+</body>
+</html>
